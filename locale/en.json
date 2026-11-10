@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Super-Agent Control Tower",
+    "description": "An interactive sandbox that makes the Super-agent dual-layer architecture, event-driven routing, pass-through, batching, watchdog and compute/state separation tangible."
+  }
+}
