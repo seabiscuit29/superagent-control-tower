@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Super-Agent 控制塔",
+    "description": "可交互沙盘：直观演示 Super-agent 的 Router/Worker 双层架构、事件驱动、直通、批处理、看门狗与存算分离。"
+  }
+}
