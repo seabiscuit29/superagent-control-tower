@@ -1,0 +1,3 @@
+- insert:
+    - id: superagent-control-tower
+      name: '@local/dsh-superagent-control-tower'
