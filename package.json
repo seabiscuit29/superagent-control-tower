@@ -1,0 +1,41 @@
+{
+  "name": "@local/dsh-superagent-control-tower",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Super-Agent 控制塔：以可交互沙盘演示 Super-agent 的双层架构、事件驱动路由与自愈能力",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "src/**",
+    "scripts/**",
+    "tests/**",
+    "docs/**",
+    "standalone/**",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "DESIGN.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-sidebar"
+      ]
+    }
+  }
+}
