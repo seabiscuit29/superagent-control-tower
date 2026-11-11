@@ -37,32 +37,56 @@
 
 ## 4. 安装
 
-```powershell
-# 在 DSH 里（会改 profile 的 package.json，只新增依赖）
-dsh plugin --profile web add file:D:\DSH_Projects\dsh_temp_project\superagent-control-tower
+包名 `@local/dsh-superagent-control-tower`，插件行 id 与 `PANEL_ID` 都是 `superagent-control-tower`。
+两个插槽：`sidebar.panellist`（入口，order=5）+ `main`（整页）。
+安装会给 profile 增加依赖并把本包登记进 `dsh.profile.bundles`，重启或刷新 DSH 后左侧栏出现「Super-Agent 控制塔」入口。
 
-# 重启 DSH web 后，左侧栏出现「Super-Agent 控制塔」入口（order=5）
+### macOS / Linux（DSH 0.2.x，推荐）
+
+在 DSH 里用内建插件管理器安装（GUI：插件页 → 安装；或让 Agent 调用 `plugin_manager` 工具）：
+
+```
+plugin_manager install_bundle
+  target  = github:seabiscuit29/superagent-control-tower
+  enabled = true
 ```
 
-包名 `@local/dsh-superagent-control-tower`，插件行 id 与 `PANEL_ID` 都是 `superagent-control-tower`。
-两个插槽：`sidebar.panellist`（入口）+ `main`（整页）。
+等价 CLI（注意：桌面版的 `desktop` profile 由 Electron 独占管理，不要用 CLI 直接改它）：
+
+```bash
+dsh plugin --profile <profile> add github:seabiscuit29/superagent-control-tower
+```
+
+> 从 GitHub 安装时 `pnpm-lock.yaml` 会固定到当时的 commit；升级时先移除再安装。
+
+### Windows / 本地开发
+
+```powershell
+# 在 DSH 里（会改 profile 的 package.json，只新增依赖 + bundle 选择）
+dsh plugin --profile web add file:D:\DSH_Projects\dsh_temp_project\superagent-control-tower
+```
 
 ## 5. 验证
 
-```powershell
-node tests/engine.test.mjs        # 引擎单测：25 条断言
+```bash
+node tests/engine.test.mjs        # 引擎单测（调度机制 + 重置日志 + 离线补发回归）
 node --check client.js            # 产物语法
-node devtools/verify-built.mjs    # 产物可被 ModuleLoader 加载并注册插槽：10 条
-node devtools/smoke.mjs           # SSR 冒烟：三视图 + 双语 + 图表 + CSS：44 条
+node scripts/build.mjs            # 由 src/ 重建 client.js（幂等）
+node scripts/build-standalone.mjs # 重建独立演示 HTML（幂等）
 ```
 
-最近一次结果（2026-11-04）：全部 PASS。
+最近一次结果（2026-11-12，v1.0.1）：引擎单测 31 条断言全部 PASS；
+两个构建脚本重复执行后 `git status` 为空（产物与源码一致）。
+
+> 开发期曾使用的 `devtools/verify-built.mjs`、`devtools/smoke.mjs`、`devtools/patch-locale.mjs`
+> 是本地工具，**不随仓库交付**；真实浏览器回归（headless Chrome，两档视口）在仓库外的兼容性测试中完成。
 
 ## 6. 目录
 
 ```
 superagent-control-tower/
   index.js  client.js  cordis.patch.yml  icon.svg  package.json
+  CHANGELOG.md                   # 版本变更记录
   DESIGN.md                      # 设计说明 v1（含验收条款）
   README.md                      # 本文件
   docs/research-brief.md         # 16 个来源的事实核对简报
@@ -73,10 +97,12 @@ superagent-control-tower/
   src/styles.js                  # 页面 CSS（sg- 前缀，仅用主题 token）
   src/views.js                   # 页面组件
   scripts/build.mjs              # 拼装 src/* → client.js
+  scripts/build-standalone.mjs   # 生成 standalone 单文件演示
+  standalone/                    # 独立演示页（单文件产物 + theme.css + vendor）
   tests/engine.test.mjs          # 引擎单测
-devtools/                        # 离线校验工具（不在交付包内）
-  verify-built.mjs  smoke.mjs  patch-locale.mjs
 ```
+
+> `devtools/`（verify-built.mjs / smoke.mjs / patch-locale.mjs）属于开发期本地工具，不随仓库交付。
 
 ## 7. 来源
 
@@ -89,4 +115,4 @@ devtools/                        # 离线校验工具（不在交付包内）
 - 沙盘是**行为模型**，不是真实调度器；延迟、token 数等为原文锚点插值，UI 已标注「示意」。
 - 实验回放只展示原文第 7 节的三组结论，未做新实验。
 - 与真实 Super-agent 原型的差异（原型无 Watchdog 模块）已在研究简报中标注。
-- 未做真实浏览器 E2E（Playwright 级）回归；当前验证为引擎单测 + SSR 冒烟 + 产物加载校验。
+- 仓库只自带引擎单测；真实浏览器 E2E（headless Chrome，1440×900 / 1280×800 两档视口）在仓库外的兼容性测试中执行（2026-11-11，v1.0.0 基线；v1.0.1 修复后复验通过），仓库不包含 Playwright 级回归。
