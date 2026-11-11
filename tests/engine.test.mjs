@@ -162,6 +162,30 @@ section('7. 剧本确定性与结构');
   })());
 }
 
+/* 8. 重置日志与离线剧本：修复回归（v1.0.1） */
+section('8. 重置日志与离线剧本补发');
+{
+  // v1.0.0 缺陷：reset() 先写 system.reset，随后 playScenario('intro') 的 resetState() 清空日志，
+  // 导致「沙盘已重置」永远不可见。现在改为先重开剧本、后写重置日志。
+  const engine = fresh();
+  engine.playScenario('bug');
+  advance(engine, 1500, 100);
+  engine.reset();
+  const logs = engine.getState().logs;
+  check('重置后「沙盘已重置」日志可见', logs.some((entry) => entry.code === 'system.reset'), logs.map((entry) => entry.code).slice(0, 4).join(','));
+  check('重置后同时有一句开场剧本日志', logs.some((entry) => entry.code === 'scenario.start' && entry.params.name === 'intro'), logs.map((entry) => entry.code).join(','));
+  check('重置后旧剧本日志已清空', !logs.some((entry) => entry.code === 'scenario.start' && entry.params.name === 'bug'), logs.map((entry) => entry.code).join(','));
+
+  // v1.0.0 缺陷：offline 剧本 5.2s 就重连，而 Worker 约 7.1s 才投递，走不到「入队 → 补发」。
+  const offline = fresh();
+  offline.playScenario('offline');
+  advance(offline, 10000, 100);
+  const state = offline.getState();
+  check('离线剧本产生「结果入队」日志', state.logs.some((entry) => entry.code === 'cloud.queue'), state.logs.filter((entry) => entry.tag === 'cloud').map((entry) => entry.code).join(','));
+  check('离线剧本重连后「补发」日志', state.logs.some((entry) => entry.code === 'cloud.flush'), state.logs.filter((entry) => entry.tag === 'cloud').map((entry) => entry.code).join(','));
+  check('补发后队列清空、补发计数为 1', state.persist.queue === 0 && state.persist.flushed === 1, JSON.stringify(state.persist));
+}
+
 console.log('\n' + (failures.length === 0 ? 'ALL PASS' : 'FAILURES: ' + failures.length) + ' (' + passed + ' assertions)');
 if (failures.length > 0) {
   for (const failure of failures) console.error(' - ' + failure);

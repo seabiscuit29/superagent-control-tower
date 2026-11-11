@@ -26,6 +26,8 @@ const client = read('client.js');
 const theme = read('standalone/theme.css');
 const react = read('standalone/vendor/react.production.min.js');
 const reactDom = read('standalone/vendor/react-dom.production.min.js');
+// favicon 内联为 data URI：独立演示页保持完全自包含，且不再产生 favicon 404。
+const iconHref = 'data:image/svg+xml,' + encodeURIComponent(read('icon.svg'));
 
 /** 内联到 HTML 的脚本里不能出现 </script（会提前闭合标签）。 */
 const scriptSafe = (text) => text.replace(/<\/script/gi, '<\\/script');
@@ -186,6 +188,7 @@ const html = `<!doctype html>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="light dark" />
+<link rel="icon" href="${iconHref}" type="image/svg+xml" />
 <title>${pkg.name.replace('@local/', '')} · Super-Agent 控制塔 · 独立演示</title>
 <style>
 /* ===== DSH design-platform 主题 token（抽取自 @deepseek-ai/dsh-client-ui-theme，MIT） ===== */
@@ -218,7 +221,9 @@ if (!html.includes('--dsw-alias-bg-base')) problems.push('缺少主题 token');
 if (!html.includes('data-ds-dark-theme')) problems.push('缺少深色主题切换');
 if (!html.includes('React.createElement')) problems.push('缺少应用引导脚本');
 if (/<script[^>]+src=/i.test(html)) problems.push('含外部 <script src>');
-if (/<link[^>]+href=/i.test(html)) problems.push('含外部 <link href>');
+if (/<link[^>]+href="(?!data:)[^"]+"/i.test(html)) problems.push('含外部 <link href>');
+if (!html.includes('rel="icon"')) problems.push('缺少 favicon');
+if (!html.endsWith('\n')) problems.push('产物末尾缺少换行');
 if (html.length < 200000) problems.push('产物过小，可能缺少内联资源: ' + html.length);
 if (problems.length > 0) {
   console.error('独立 HTML 构建自检失败:\n - ' + problems.join('\n - '));

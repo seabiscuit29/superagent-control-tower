@@ -1,6 +1,6 @@
 {
   "name": "@local/dsh-superagent-control-tower",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Super-Agent 控制塔：以可交互沙盘演示 Super-agent 的双层架构、事件驱动路由与自愈能力",
   "type": "module",
@@ -14,6 +14,7 @@
     "index.js",
     "client.js",
     "cordis.patch.yml",
+    "CHANGELOG.md",
     "src/**",
     "scripts/**",
     "tests/**",

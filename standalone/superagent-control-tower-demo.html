@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%20width%3D%2264%22%20height%3D%2264%22%20role%3D%22img%22%20aria-label%3D%22Super-Agent%20Control%20Tower%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22sat-orbit%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234C6FFF%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238B5CF6%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Crect%20x%3D%222%22%20y%3D%222%22%20width%3D%2260%22%20height%3D%2260%22%20rx%3D%2215%22%20fill%3D%22%230E1424%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%2220%22%20fill%3D%22none%22%20stroke%3D%22url(%23sat-orbit)%22%20stroke-width%3D%222%22%20stroke-dasharray%3D%223%205%22%20opacity%3D%220.95%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%2211%22%20fill%3D%22none%22%20stroke%3D%22%234C6FFF%22%20stroke-width%3D%222.4%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%224.6%22%20fill%3D%22%234C6FFF%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2232%22%20cy%3D%2212%22%20r%3D%223.4%22%20fill%3D%22%23F5A524%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2249.3%22%20cy%3D%2242%22%20r%3D%223.4%22%20fill%3D%22%232ED3A6%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2214.7%22%20cy%3D%2242%22%20r%3D%223.4%22%20fill%3D%22%23F5A524%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M32%2016v4.6M45.4%2040l-3.1-1.9M18.6%2040l3.1-1.9%22%20stroke%3D%22%2393A4FF%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%2F%3E%0A%3C%2Fsvg%3E%0A" type="image/svg+xml" />
 <title>dsh-superagent-control-tower · Super-Agent 控制塔 · 独立演示</title>
 <style>
 /* ===== DSH design-platform 主题 token（抽取自 @deepseek-ai/dsh-client-ui-theme，MIT） ===== */
@@ -1562,8 +1563,10 @@ APP.createEngine = function createEngine() {
     offline: [
       { at: 300, fn: function () { inject('im', DEMO.messages.bug, DEMO.people[0], 'IM · 支付联调群'); } },
       { at: 1500, fn: function () { setOffline(true); } },
-      { at: 5200, fn: function () { setOffline(false); } },
-      { at: 5600, fn: function () { log('system', 'scenario.offlineNote', {}); } },
+      // 实测 Worker 约 6.6s 完成、约 7.1s 投递结果；重连必须晚于投递，
+      // 否则「结果入队 → 重连补发」路径演示不出来。
+      { at: 7800, fn: function () { setOffline(false); } },
+      { at: 8300, fn: function () { log('system', 'scenario.offlineNote', {}); } },
     ],
     noise: [
       { at: 300, fn: function () { inject('im', '哈哈', DEMO.people[2], 'IM · 支付联调群'); } },
@@ -1662,10 +1665,11 @@ APP.createEngine = function createEngine() {
 
   function reset() {
     const speed = S.speed;
-    resetState();
+    // 先重开放场剧本（playScenario 内部会 resetState 并清空日志），
+    // 再写「沙盘已重置」，否则这一行会被紧接着的 resetState() 清掉。
+    playScenario('intro');
     S.speed = speed;
     log('system', 'system.reset', {});
-    playScenario('intro');
   }
 
   /* ---------- 链式召回：Trigger → Thread → Worker → 关联 Thread ---------- */

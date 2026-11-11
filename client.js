@@ -1216,8 +1216,10 @@ APP.createEngine = function createEngine() {
     offline: [
       { at: 300, fn: function () { inject('im', DEMO.messages.bug, DEMO.people[0], 'IM · 支付联调群'); } },
       { at: 1500, fn: function () { setOffline(true); } },
-      { at: 5200, fn: function () { setOffline(false); } },
-      { at: 5600, fn: function () { log('system', 'scenario.offlineNote', {}); } },
+      // 实测 Worker 约 6.6s 完成、约 7.1s 投递结果；重连必须晚于投递，
+      // 否则「结果入队 → 重连补发」路径演示不出来。
+      { at: 7800, fn: function () { setOffline(false); } },
+      { at: 8300, fn: function () { log('system', 'scenario.offlineNote', {}); } },
     ],
     noise: [
       { at: 300, fn: function () { inject('im', '哈哈', DEMO.people[2], 'IM · 支付联调群'); } },
@@ -1316,10 +1318,11 @@ APP.createEngine = function createEngine() {
 
   function reset() {
     const speed = S.speed;
-    resetState();
+    // 先重开放场剧本（playScenario 内部会 resetState 并清空日志），
+    // 再写「沙盘已重置」，否则这一行会被紧接着的 resetState() 清掉。
+    playScenario('intro');
     S.speed = speed;
     log('system', 'system.reset', {});
-    playScenario('intro');
   }
 
   /* ---------- 链式召回：Trigger → Thread → Worker → 关联 Thread ---------- */
